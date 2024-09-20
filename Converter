@@ -1,0 +1,164 @@
+import 'package:flutter/material.dart';
+
+void main() => runApp(MyApp());
+
+class MyApp extends StatefulWidget {
+  @override
+  MyAppState createState() => MyAppState();
+}
+
+class MyAppState extends State<MyApp> {
+  double _numberFrom = 0;
+  String? _startMeasure;
+  String? _convertedMeasure;
+  String _resultMessage = '';
+
+  final List<String> _measures = [
+    'meters', 'kilometers', 'grams', 'kilograms', 
+    'feet', 'miles', 'pounds (lbs)', 'ounces',
+  ];
+
+  final Map<String, int> _measuresMap = {
+    'meters': 0, 
+    'kilometers': 1, 
+    'grams': 2,
+    'kilograms': 3, 
+    'feet': 4, 
+    'miles': 5,
+    'pounds (lbs)': 6, 
+    'ounces': 7,
+  };
+
+  final dynamic _formulas = {
+    '0': [1, 0.001, 0, 0, 3.28084, 0.000621371, 0, 0],
+    '1': [1000, 1, 0, 0, 3280.84, 0.621371, 0, 0],
+    '2': [0, 0, 1, 0.0001, 0, 0, 0.00220462, 0.035274],
+    '3': [0, 0, 1000, 1, 0, 0, 2.20462, 35.274],
+    '4': [0.3048, 0.0003048, 0, 0, 1, 0.000189394, 0, 0],
+    '5': [1609.34, 1.60934, 0, 0, 5280, 1, 0, 0],
+    '6': [0, 0, 453.592, 0.453592, 0, 0, 1, 16],
+    '7': [0, 0, 28.3495, 0.0283495, 3.28084, 0, 0.0625, 1],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _startMeasure = _measures[0]; // Default value
+    _convertedMeasure = _measures[1]; // Default value
+  }
+
+  // convert method
+  void convert(double value, String from, String to) {
+    // from measure
+    int nFrom = _measuresMap[from]!;
+    // to measure
+    int nTo = _measuresMap[to]!;
+    // value that takes the correct conversion formula
+    var multiplier = _formulas[nFrom.toString()][nTo];
+    // calculate the result of the conversion
+    var result = value * multiplier;
+
+    // result message
+    setState(() {
+      // if
+      _resultMessage = (result == 0)
+          ? 'This conversion cannot be performed'
+      // else
+          : '${_numberFrom.toString()} $_startMeasure are ${result.toString()} $_convertedMeasure';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Create TextStyle Widgets
+    final TextStyle inputStyle = TextStyle(fontSize: 20, color: Colors.blue[900]);
+    final TextStyle labelStyle = TextStyle(fontSize: 24, color: Colors.grey[700]);
+
+    return MaterialApp(
+      title: 'Measures Converter',
+      home: Scaffold(
+        appBar: AppBar(title: Text('Measures Converter')),
+        // additional background color :)
+        backgroundColor: Color.fromARGB(255, 255, 255, 255),
+        // container with padding
+        body: Container(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // UI elements
+                SizedBox(height: 20),
+                Text('Value', style: labelStyle, textAlign: TextAlign.center), // additional TextAlign
+                SizedBox(height: 10),
+                TextField(
+                  style: inputStyle,
+                  decoration: InputDecoration(hintText: "Please insert the measure to be converted"),
+                  onChanged: (text) {
+                    var rv = double.tryParse(text);
+                    if (rv != null) {
+                      setState(() {
+                        _numberFrom = rv;
+                      });
+                    }
+                  },
+                ),
+                // 'from' label
+                SizedBox(height: 20),
+                Text('From', style: labelStyle, textAlign: TextAlign.center), // additional TextAlign
+                DropdownButton<String>(
+                  isExpanded: true,
+                  items: _measures.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _startMeasure = value;
+                    });
+                  },
+                  value: _startMeasure,
+                ),
+                // 'to' label
+                SizedBox(height: 20),
+                Text('To', style: labelStyle, textAlign: TextAlign.center), // additional TextAlign
+                DropdownButton<String>(
+                  isExpanded: true,
+                  items: _measures.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value, style: inputStyle),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _convertedMeasure = value;
+                    });
+                  },
+                  value: _convertedMeasure,
+                ),
+                // 'convert' button
+                SizedBox(height: 40),
+                ElevatedButton(
+                  child: Text('Convert', style: inputStyle),
+                  onPressed: () {
+                    if (_startMeasure == null || _convertedMeasure == null || _numberFrom == 0) {
+                      return;
+                    } else {
+                      convert(_numberFrom, _startMeasure!, _convertedMeasure!);
+                    }
+                  },
+                ),
+                // display the result
+                SizedBox(height: 20),
+                Text(_resultMessage, style: labelStyle, textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
